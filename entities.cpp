@@ -1,18 +1,22 @@
 #include "CS3113/entities/Entity.h"
+#include "CS3113/entities/Paddle.h" 
+#include "CS3113/entities/Ball.h" 
 
 // Global Constants
 constexpr int SCREEN_WIDTH  = 1600 / 2,
               SCREEN_HEIGHT = 900 / 2,
               FPS           = 120;
 
-constexpr char    BG_COLOUR[] = "#404F59";
+constexpr char    BG_COLOUR[] = "#FFFFFFF";
 constexpr Vector2 ORIGIN      = { SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
 
 // Global Variables
 AppStatus gAppStatus = RUNNING;
 float gPreviousTicks = 0.0f;
 
-Entity *gProtag = nullptr;
+Paddle *gLeftPaddle = nullptr;
+Paddle *gRightPaddle = nullptr;
+Ball *gBall = nullptr;
 
 // Function Declarations
 void initialise();
@@ -40,10 +44,32 @@ void initialise()
 
     Assets from @see https://sscary.itch.io/the-adventurer-female
     */
-    gProtag = new Entity(
-        ORIGIN,                       // position
+   gBall = new Ball(
+       ORIGIN,// position
+       {20,20}, // scale
+       "./assets/drawing_path21.png",    // texture file address
+        05.0f, SCREEN_HEIGHT - 05.0f,
+        10.0f, SCREEN_WIDTH - 10.0f
+       // ATLAS,                        // single image or atlas?
+       // { 1,1 },                     // atlas dimensions
+       // animationAtlas                // actual atlas
+   );
+   gBall->moveLeft();
+    gLeftPaddle = new Paddle(
+        { 30, SCREEN_HEIGHT / 2 },// position
         {15.30f, 60.40f}, // scale
-        "./drawing.png"       // texture file address
+        "./assets/drawing_rect21.png",      // texture file address
+        50.0f, SCREEN_HEIGHT - 50.0f
+        // ATLAS,                        // single image or atlas?
+        // { 1,1 },                     // atlas dimensions
+        // animationAtlas                // actual atlas
+    );
+
+    gRightPaddle = new Paddle( 
+        { SCREEN_WIDTH - 30, SCREEN_HEIGHT /2 },// position
+        {15.30f, 60.40f}, // scale
+        "./assets/drawing_rect21.png",       // texture file address
+        50.0f, SCREEN_HEIGHT - 50.0f
         // ATLAS,                        // single image or atlas?
         // { 1,1 },                     // atlas dimensions
         // animationAtlas                // actual atlas
@@ -54,16 +80,21 @@ void initialise()
 
 void processInput() 
 {
-    gProtag->resetMovement();
+    gLeftPaddle->resetMovement();
+    gRightPaddle->resetMovement();
 
-    // if      (IsKeyDown(KEY_A)) gProtag->moveLeft();
-    // else if (IsKeyDown(KEY_D)) gProtag->moveRight();
-    if      (IsKeyDown(KEY_W)) gProtag->moveUp();
-    else if (IsKeyDown(KEY_S)) gProtag->moveDown();
+
+    // if      (IsKeyDown(KEY_A)) gLeftPaddle->moveLeft();
+    // else if (IsKeyDown(KEY_D)) gLeftPaddle->moveRight();
+    if      (IsKeyDown(KEY_W)) gLeftPaddle->moveUp();
+    else if (IsKeyDown(KEY_S)) gLeftPaddle->moveDown();
+
+    if      (IsKeyDown(KEY_UP)) gRightPaddle->moveUp();
+    else if (IsKeyDown(KEY_DOWN)) gRightPaddle->moveDown();
 
     // to avoid faster diagonal speed
-    // if (GetLength(gProtag->getMovement()) > 1.0f) 
-    //     gProtag->normaliseMovement();
+    // if (GetLength(gLeftPaddle->getMovement()) > 1.0f) 
+    //     gLeftPaddle->normaliseMovement();
 
     if (IsKeyPressed(KEY_Q) || WindowShouldClose()) gAppStatus = TERMINATED;
 }
@@ -76,7 +107,13 @@ void update()
     gPreviousTicks  = ticks;
 
     // we're not checking collisions—for now
-    gProtag->update(deltaTime);
+    gLeftPaddle->update(deltaTime);
+    gRightPaddle->update(deltaTime);
+    gBall->update(deltaTime);
+    
+    gBall->paddleInteraction(gLeftPaddle);
+    gBall->paddleInteraction(gRightPaddle);
+    // if(gBall->isColliding(gLeftPaddle)) printf("AAA\n");
 }
 
 void render()
@@ -84,7 +121,9 @@ void render()
     BeginDrawing();
     ClearBackground(ColorFromHex(BG_COLOUR));
 
-    gProtag->render();
+    gLeftPaddle->render();
+    gRightPaddle->render();
+    gBall->render();
 
     EndDrawing();
 }

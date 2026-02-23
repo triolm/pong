@@ -28,10 +28,11 @@ private:
 
     int mSpeed;
     float mAngle;
-
-    bool isColliding(Entity *other) const;
     void animate(float deltaTime);
 
+protected:
+    bool isColliding(Entity *other) const;
+    
 public:
     static const int DEFAULT_SIZE        = 250;
     static const int DEFAULT_SPEED       = 200;
@@ -72,8 +73,16 @@ public:
 
     void setPosition(Vector2 newPosition)
         { mPosition = newPosition;                }
+    void setPositionX(float x)
+        { mPosition.x = x;                        }
+    void setPositionY(float y)
+        { mPosition.y = y;                        }
     void setMovement(Vector2 newMovement)
         { mMovement = newMovement;                }
+    void setMovementX(float x)
+        { mMovement.x = x;                        }
+    void setMovementY(float y)
+        { mMovement.y = y;                        }
     void setScale(Vector2 newScale)
         { mScale = newScale;                      }
     void setColliderDimensions(Vector2 newDimensions) 

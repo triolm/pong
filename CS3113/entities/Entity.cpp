@@ -43,8 +43,9 @@ bool Entity::isColliding(Entity *other) const
         ((mColliderDimensions.x + other->getColliderDimensions().x) / 2.0f);
     float yDistance = fabs(mPosition.y - other->getPosition().y) - 
         ((mColliderDimensions.y + other->getColliderDimensions().y) / 2.0f);
-
+    // printf("HI\n");
     if (xDistance < 0.0f && yDistance < 0.0f) return true;
+    // printf("X\n");
 
     return false;
 }
@@ -71,8 +72,8 @@ void Entity::animate(float deltaTime)
 
 void Entity::update(float deltaTime)
 {
-    // mAnimationIndices = mAnimationAtlas.at(mDirection);
-    // mAnimationIndices = {0,0};
+    if (mTextureType == ATLAS)
+        mAnimationIndices = mAnimationAtlas.at(mDirection);
 
     mPosition = {
         mPosition.x + mSpeed * mMovement.x * deltaTime,
