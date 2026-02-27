@@ -4,7 +4,7 @@
 # Source and target
 # SRCS = animation_single_row.cpp
 # SRCS = animation_atlas.cpp
-SRCS = entities.cpp
+SRCS = main.cpp
 
 TARGET = raylib_app
 

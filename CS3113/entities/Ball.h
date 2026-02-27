@@ -10,46 +10,79 @@ class Ball: public Entity
 {
 public:
     Ball(Vector2 position, Vector2 scale, const char *textureFilepath,
-        float minHeight, float maxHeight,float minWidth, float maxWidth) : 
-        minHeight(minHeight), maxHeight(maxHeight),   
-        minWidth(minWidth), maxWidth(maxWidth),   
-        Entity(position, scale, textureFilepath) {
-        setSpeed(400);
+        float minHeight, float maxHeight,float minWidth, float maxWidth,
+        Vector2 spriteSheetDimensions, std::vector<int> animationIndices) : 
+
+        minHeight(minHeight), maxHeight(maxHeight), 
+        minWidth(minWidth), maxWidth(maxWidth), 
+        Entity(position, scale, textureFilepath, 
+        spriteSheetDimensions, animationIndices){
+
+        setSpeed(650);
+        moveLeft();
+        reset();
     }
 
     void update(float deltaTime){
+        if(dead) return;
+        // printf("%f\n",getColliderDimensions().y/2.0f);
         Entity::update(deltaTime);
-        if(getPosition().y > maxHeight || getPosition().y < minHeight) {
+        if(getPosition().y +  getColliderDimensions().y/2.0f > maxHeight){
             setMovementY(-getMovement().y);
-            setPositionY(getPosition().y + getMovement().y*2);
+            setPositionY(maxHeight - getColliderDimensions().y/2.0f);
+            setAngle(GetRandomValue(0,365));
+        }
+        if(getPosition().y -  getColliderDimensions().y/2.0f < minHeight) {
+            setMovementY(-getMovement().y);
+            setPositionY(minHeight + getColliderDimensions().y/2.0f);
+            setAngle(GetRandomValue(0,365));
         }
 
-        if(getPosition().x > maxWidth || getPosition().x < minWidth) {
-            setPosition({(minWidth + maxWidth)/2.0f,(minHeight+maxHeight)/2.0f});
-            setMovementY(0);
-            normaliseMovement();
+        if(getPosition().x > maxWidth || 
+           getPosition().x - getColliderDimensions().x < minWidth) {
+            // reset();
+            dead = true;
         }
 
     }
 
+    bool getDead(){
+        return dead;
+    }
+    void setDead(bool dead){
+        this->dead = dead;
+    }
+
+    void reset(){
+        setPosition({(minWidth + maxWidth)/2.0f,(minHeight+maxHeight)/2.0f});
+            setMovementY(0);
+            normaliseMovement();
+            setMovementY(GetRandomValue(-15,15)/100.0f);
+            normaliseMovement();
+    }
+
     void paddleInteraction(Paddle* p){
-        printf("%d\n", isColliding(p));
+        // printf("%d\n", isColliding(p));
         if(isColliding(p)){
             setMovementX(-getMovement().x);
-            setPositionX(getPosition().x + getMovement().x*2);
             // https://community.khronos.org/t/the-math-of-pong-or-deflection-of-an-object-off-a-surface/32572/5
             float paddleY = p->getPosition().y;
             float paddleHeight = p->getScale().y/2.0f;
-            
-            printf("%f\n", paddleHeight/(paddleY-getPosition().y));
             setMovementY((getPosition().y-paddleY)/paddleHeight);
             normaliseMovement();
+
+            setAngle(GetRandomValue(0,365));
+            if(getMovement().x > 0)
+                setPositionX(p->getPosition().x + p->getColliderDimensions().x/2.0f + getColliderDimensions().x/2.0f);
+                else
+                setPositionX(p->getPosition().x - p->getColliderDimensions().x/2.0f - getColliderDimensions().x/2.0f);
         }
     }
 
 private:
     float minHeight, maxHeight;
     float minWidth, maxWidth;
+    bool dead = true;
 };
 
 #endif

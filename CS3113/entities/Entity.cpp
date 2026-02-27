@@ -4,24 +4,31 @@ Entity::Entity() : mPosition {0.0f, 0.0f}, mMovement {0.0f, 0.0f},
                    mScale {DEFAULT_SIZE, DEFAULT_SIZE},
                    mColliderDimensions {DEFAULT_SIZE, DEFAULT_SIZE}, 
                    mTexture {NULL}, mTextureType {SINGLE}, 
-                   mSpriteSheetDimensions {}, mDirection {DOWN}, 
-                   mAnimationAtlas {{}}, mAnimationIndices {}, mFrameSpeed {0} {}
+                   mSpriteSheetDimensions {},
+                   // mDirection {DOWN}, 
+                   //mAnimationAtlas {{}}, mAnimationIndices {},
+                    mFrameSpeed {0} {}
 
 Entity::Entity(Vector2 position, Vector2 scale, const char *textureFilepath) : 
     mPosition {position}, mScale {scale}, mMovement {0.0f, 0.0f},
     mColliderDimensions {scale}, mTexture {LoadTexture(textureFilepath)},
-    mTextureType {SINGLE}, mDirection {DOWN}, mAnimationAtlas {{}}, 
-    mAnimationIndices {}, mFrameSpeed {0}, mSpeed {DEFAULT_SPEED}, 
+    mTextureType {SINGLE},
+    // mDirection {DOWN}, mAnimationAtlas {{}}, 
+   // mAnimationIndices {}, 
+    mFrameSpeed {0}, mSpeed {DEFAULT_SPEED}, 
     mAngle {0.0f} {}
 
 Entity::Entity(Vector2 position, Vector2 scale, const char *textureFilepath, 
-        TextureType textureType, Vector2 spriteSheetDimensions, std::map<Direction, 
-        std::vector<int>> animationAtlas) : mPosition {position}, 
+        //TextureType textureType, 
+        Vector2 spriteSheetDimensions, const std::vector<int> animationIndices) 
+        //std::map<Direction, 
+        //std::vector<int>> animationAtlas
+        : mPosition {position}, 
         mMovement { 0.0f, 0.0f }, mScale {scale}, mColliderDimensions {scale}, 
         mTexture {LoadTexture(textureFilepath)}, mTextureType {ATLAS}, 
         mSpriteSheetDimensions {spriteSheetDimensions}, 
-        mAnimationAtlas {animationAtlas}, mDirection {DOWN}, 
-        mAnimationIndices {animationAtlas.at(DOWN)}, 
+        // mAnimationAtlas {animationAtlas}, mDirection {DOWN}, 
+        mAnimationIndices {animationIndices}, 
         mFrameSpeed {DEFAULT_FRAME_SPEED}, mAngle { 0.0f }, 
         mSpeed { DEFAULT_SPEED } {}
 
@@ -58,30 +65,25 @@ bool Entity::isColliding(Entity *other) const
  */
 void Entity::animate(float deltaTime)
 {
-    mAnimationTime += deltaTime;
+    mAnimationTime += deltaTime/5;
     float framesPerSecond = 1.0f / mFrameSpeed;
 
     if (mAnimationTime >= framesPerSecond)
     {
         mAnimationTime = 0.0f;
 
-        mCurrentFrameIndex++;
-        mCurrentFrameIndex %= mAnimationIndices.size();
+        incrementFrame();
     }
 }
 
-void Entity::update(float deltaTime)
-{
-    if (mTextureType == ATLAS)
-        mAnimationIndices = mAnimationAtlas.at(mDirection);
-
+void Entity::update(float deltaTime){
     mPosition = {
         mPosition.x + mSpeed * mMovement.x * deltaTime,
         mPosition.y + mSpeed * mMovement.y * deltaTime
     };
 
-    if (mTextureType == ATLAS && GetLength(mMovement) != 0) 
-        animate(deltaTime);
+    // if (mTextureType == ATLAS)// && GetLength(mMovement) != 0) 
+    animate(deltaTime);
 }
 
 void Entity::render()
@@ -105,7 +107,7 @@ void Entity::render()
         case ATLAS:
             textureArea = getUVRectangle(
                 &mTexture, 
-                mAnimationIndices[mCurrentFrameIndex], 
+                getAnimationIndices()[mCurrentFrameIndex], 
                 mSpriteSheetDimensions.x, 
                 mSpriteSheetDimensions.y
             );
