@@ -56,7 +56,7 @@ public:
     void moveRight() { mMovement.x =  1; }// mDirection = RIGHT; }
 
     virtual const std::vector<int> getAnimationIndices() const { return mAnimationIndices; }
-    virtual int getMaxFrame() const { return mAnimationIndices.size(); }
+    // virtual int getMaxFrame() const { return mAnimationIndices.size(); }
 
     void resetMovement() { mMovement = { 0.0f, 0.0f }; }
 
@@ -78,7 +78,7 @@ public:
 
     void incrementFrame(){
         mCurrentFrameIndex++;
-        mCurrentFrameIndex %= getMaxFrame();        
+        mCurrentFrameIndex %= getAnimationIndices().size();        
     }
 
     void setPosition(Vector2 newPosition)

@@ -3,6 +3,7 @@
 #include "CS3113/entities/Ball.h" 
 #include "CS3113/entities/Button.h" 
 #include "CS3113/entities/Score.h" 
+#include "CS3113/entities/Background.h" 
 
 // Global Constants
 constexpr int SCREEN_WIDTH  = 1600 / 2,
@@ -19,8 +20,8 @@ float gPreviousTicks = 0.0f;
 Paddle *gLeftPaddle = nullptr;
 Paddle *gRightPaddle = nullptr;
 Ball *gBall = nullptr;
-Entity *gGameBg = nullptr;
-Entity *gStartBg = nullptr;
+Background *gBg = nullptr;
+// Entity *gStartBg = nullptr;
 
 Button *gSinglePlayer = nullptr;
 Button *gMultiPlayer = nullptr;
@@ -28,11 +29,9 @@ Button *gMultiPlayer = nullptr;
 Score *gLeftScore = nullptr;
 Score *gRightScore = nullptr;
 
-Entity *gWaitingBg = nullptr;
-Entity *gP1bg = nullptr;
-Entity *gP2bg = nullptr;
-
-enum GameStatus {PLAYING, WAITING, STARTMENU, PLAYER1, PLAYER2};
+// Entity *gWaitingBg = nullptr;
+// Entity *gP1bg = nullptr;
+// Entity *gP2bg = nullptr;
 
 bool gAuto = false;
 
@@ -63,45 +62,55 @@ void initialise()
 
     float sizeRatio  = 48.0f / 64.0f;
 
+
     /*
     By default, the colliders of our entity object will have the same
     dimensions as the entity's scale.
 
     Assets from @see https://sscary.itch.io/the-adventurer-female
     */
-   gWaitingBg = new Entity(
-       ORIGIN,// position
-       {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
-       "./assets/waiting.png"    // texture file address
-    //    ATLAS,                        // single image or atlas?
-    //    { 1,1 },                     // atlas dimensions
-    //    ballAtlas                // actual atlas
-    );
-   gGameBg = new Entity(
-       ORIGIN,// position
-       {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
-       "./assets/bg.png"    // texture file address
-    //    ATLAS,                        // single image or atlas?
-    //    { 1,1 },                     // atlas dimensions
-    //    ballAtlas                // actual atlas
-    );
-   gP1bg = new Entity(
-       ORIGIN,// position
-       {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
-       "./assets/player1.png",
-        // ATLAS,                        // single image or atlas?
-       { 2,1 },                     // atlas dimensions
-       {0,1}                 // actual atlas
-    );
-   gP2bg = new Entity(
-       ORIGIN,// position
-       {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
-       "./assets/player2.png",
-    //    ATLAS,                        // single image or atlas?
-       { 2,1 },                     // atlas dimensions
-       {0,1}                // actual atlas
-    );
+//    gWaitingBg = new Entity(
+//        ORIGIN,// position
+//        {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
+//        "./assets/waiting.png"    // texture file address
+//     );
 
+//    gGameBg = new Entity(
+//        ORIGIN,// position
+//        {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
+//        "./assets/bg.png"    // texture file address
+//     );
+    
+//    gP1bg = new Entity(
+//        ORIGIN,// position
+//        {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
+//        "./assets/player1.png",
+//         // ATLAS,                        // single image or atlas?
+//        { 2,1 },                     // atlas dimensions
+//        {0,1}                 // actual atlas
+//     );
+//    gP2bg = new Entity(
+//        ORIGIN,// position
+//        {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
+//        "./assets/player2.png",
+//        { 2,1 },                     // atlas dimensions
+//        {0,1}                // actual atlas
+//     );
+    std::map<GameStatus, std::vector<int>> bgMap{
+        {WAITING, {1}},
+        {PLAYING, {0}},
+        {PLAYER1, {2,3}},
+        {PLAYER2, {4,5}},
+        {STARTMENU, {6,7}}
+    };
+
+    gBg = new Background(
+        ORIGIN,// position
+       {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
+       "./assets/bg.png",
+       { 4,2 },  &gGameStatus,                    // atlas dimensions
+       bgMap
+    );
 
    gLeftScore = new Score(
         {SCREEN_WIDTH/2- 30, 60},// position
@@ -119,14 +128,13 @@ void initialise()
         { 3,10 },                     // atlas dimensions
         { 10,11,12,13,14,15,16,17,18,19 }                // actual atlas
     );
-   gStartBg = new Entity(
-       ORIGIN,// position
-       {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
-       "./assets/startmenubg.png",    // texture file address
-    //    ATLAS,                        // single image or atlas?
-       { 2,1 },                     // atlas dimensions
-       {0,1}                // actual atlas
-    );
+//    gStartBg = new Entity(
+//        ORIGIN,// position
+//        {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
+//        "./assets/startmenubg.png",    // texture file address
+//        { 2,1 },                     // atlas dimensions
+//        {0,1}                // actual atlas
+//     );
 
 
    gBall = new Ball(
@@ -135,7 +143,6 @@ void initialise()
        "./assets/gameplay.png",    // texture file address
         30.0f, SCREEN_HEIGHT - 30.0f,
         40.0f, SCREEN_WIDTH - 40.0f,
-    //    ATLAS,                        // single image or atlas?
        { 3,10 },                     // atlas dimensions
        { 4,5 }                // actual atlas
     );
@@ -146,7 +153,6 @@ void initialise()
         {SCREEN_WIDTH/2 , SCREEN_HEIGHT/ 2 + 10},
        {80*4.5f, 22*4.5f}, // scale
        "./assets/ui.png",    // texture file address
-    //    ATLAS,                        // single image or atlas?
        { 3,2 },                     // atlas dimensions
        {0,1}                // actual atlas
     );
@@ -155,7 +161,6 @@ void initialise()
        {SCREEN_WIDTH/2 , SCREEN_HEIGHT/ 2 + 80},// position
        {80*4.5f, 22*4.5f}, // scale
        "./assets/ui.png",    // texture file address
-    //    ATLAS,                        // single image or atlas?
        { 3,2 },                     // atlas dimensions
        {2,3}                // actual atlas
     );
@@ -234,20 +239,22 @@ void update()
     float deltaTime = ticks - gPreviousTicks;
     gPreviousTicks  = ticks;
 
+    gBg->update(deltaTime);
+
     if(gGameStatus == STARTMENU){
-        gStartBg->update(deltaTime);
+        // gStartBg->update(deltaTime);
         gSinglePlayer->update(deltaTime);
         gMultiPlayer->update(deltaTime);
     }
 
     if(gGameStatus == PLAYER1){
-        gP1bg->update(deltaTime);
+        // gP1bg->update(deltaTime);
         gSinglePlayer->update(deltaTime);
         gMultiPlayer->update(deltaTime);
     }
 
     if(gGameStatus == PLAYER2){
-        gP2bg->update(deltaTime);
+        // gP2bg->update(deltaTime);
         gSinglePlayer->update(deltaTime);
         gMultiPlayer->update(deltaTime);
     }
@@ -287,30 +294,30 @@ void render()
     BeginDrawing();
     ClearBackground(ColorFromHex(BG_COLOUR));
 
-    
+    gBg->render();
     
     if(gGameStatus == STARTMENU){
-        gStartBg->render();
+        // gStartBg->render();
         gSinglePlayer->render();
         gMultiPlayer->render();
     }
 
     if(gGameStatus == PLAYER1){
-        gP1bg->render();
+        // gP1bg->render();
         gSinglePlayer->render();
         gMultiPlayer->render();
     }
     if(gGameStatus == PLAYER2){
-        gP2bg->render();
+        // gP2bg->render();
         gSinglePlayer->render();
         gMultiPlayer->render();
     }
     
     if(gGameStatus == PLAYING || gGameStatus == WAITING){
-        gGameBg->render();
-        if(gGameStatus == WAITING){
-            gWaitingBg->render();
-        }
+        // gGameBg->render();
+        // if(gGameStatus == WAITING){
+            // gWaitingBg->render();
+        // }
         gLeftPaddle->render();
         gRightPaddle->render();
         gBall->render();
