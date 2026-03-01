@@ -4,6 +4,7 @@
 #include "CS3113/entities/Button.h" 
 #include "CS3113/entities/Score.h" 
 #include "CS3113/entities/Background.h" 
+#include "CS3113/entities/PowerUp.h" 
 
 // Global Constants
 constexpr int SCREEN_WIDTH  = 1600 / 2,
@@ -33,6 +34,8 @@ Button *gHard = nullptr;
 Score *gLeftScore = nullptr;
 Score *gRightScore = nullptr;
 
+PowerUp *gPowerUp = nullptr;
+
 std::vector<Ball*> gBalls;
 
 // Entity *gWaitingBg = nullptr;
@@ -56,12 +59,16 @@ void shutdown();
 void reset(){
     gLeftPaddle->setPosition({ 60, SCREEN_HEIGHT / 2 });
     gRightPaddle->setPosition({ SCREEN_WIDTH-60, SCREEN_HEIGHT / 2 });
+
+    gLeftPaddle->reset();
+    gRightPaddle->reset();
     gBalls[0]->reset(gSpeed);
     for(size_t i = gBalls.size() -1; i >= 1; --i){
         // printf("hi%i\n", i);
         delete gBalls[i];
         gBalls.pop_back();
     }
+    gPowerUp->reset();
 }
 
 void newBall(){
@@ -105,6 +112,16 @@ void initialise()
        { 4,2 },  &gGameStatus,                    // atlas dimensions
        bgMap
     );
+
+    gPowerUp = new PowerUp(
+            ORIGIN,// position
+            {13*4.5f, 24*4.5f}, // scale
+            "./assets/gameplay.png",    // texture file address
+            60.0f, SCREEN_HEIGHT - 60.0f,
+            60.0f, SCREEN_WIDTH - 60.0f,
+            { 3,10 },                     // atlas dimensions
+            { 6 }        // actual atlas
+        );
 
    gLeftScore = new Score(
         {SCREEN_WIDTH/2- 40, 70},// position
@@ -172,21 +189,21 @@ void initialise()
     
     gLeftPaddle = new Paddle(
         { 60, SCREEN_HEIGHT / 2 },// position
-        {13*4.5f, 24*4.5f}, // scale
-        "./assets/gameplay.png",      // texture file address
+        {13*4.5f, 30*4.5f}, // scale
+        "./assets/upgrade.png",      // texture file address
         40.0f, SCREEN_HEIGHT - 40.0f,
-        { 3,10 },                     // atlas dimensions
-        {0,1}                // actual atlas
+        { 1,8 },                     // atlas dimensions
+        {4,5}                // actual atlas
     );
     gLeftPaddle->setColliderDimensions({30,90});
 
     gRightPaddle = new Paddle( 
         { SCREEN_WIDTH - 60, SCREEN_HEIGHT /2 },// position
-        {13*4.5f, 24*4.5f}, // scale
-        "./assets/gameplay.png",       // texture file address
+        {13*4.5f, 30*4.5f}, // scale
+        "./assets/upgrade.png",       // texture file address
         40.0f, SCREEN_HEIGHT - 40.0f,
-        { 3,10 },                     // atlas dimensions
-        {2,3}                // actual atlas
+        { 1,8 },                     // atlas dimensions
+        {6,7}                // actual atlas
     );
     gRightPaddle->setColliderDimensions({30,90});
 
@@ -303,6 +320,8 @@ void update()
         gLeftPaddle->update(deltaTime);
         gRightPaddle->update(deltaTime);
 
+        gPowerUp->update(deltaTime, gLeftPaddle, gRightPaddle);
+
         bool allDead = true;
         for(const Ball* b: gBalls){
             // printf("%i\n", b->getDead());
@@ -356,6 +375,7 @@ void render()
     ClearBackground(ColorFromHex(BG_COLOUR));
 
     gBg->render();
+    
 
     if(gGameStatus == DIFFSELECT){
         gEasy->render();
@@ -379,12 +399,13 @@ void render()
         gSinglePlayer->render();
         gMultiPlayer->render();
     }
-    
+
     if(gGameStatus == PLAYING || gGameStatus == WAITING){
         // gGameBg->render();
         // if(gGameStatus == WAITING){
             // gWaitingBg->render();
         // }
+        gPowerUp->render();
         gLeftPaddle->render();
         gRightPaddle->render();
 

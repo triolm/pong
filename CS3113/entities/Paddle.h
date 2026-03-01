@@ -18,10 +18,38 @@ public:
         Entity::update(deltaTime);
         if(getPosition().y + getColliderDimensions().y/2.0f > maxHeight) setPositionY(maxHeight - getColliderDimensions().y/2.0f);
         if(getPosition().y - getColliderDimensions().y/2.0f < minHeight) setPositionY(minHeight + getColliderDimensions().y/2.0f);
+
+        if(upgradeCountdpwn > 0){
+            upgradeCountdpwn -= deltaTime;
+        }
+        if(upgraded && upgradeCountdpwn < 0){
+            std::vector<int> a = getAnimationIndices();
+            setAnimationIndices({a[0] +4 ,a[1] +4});
+            upgraded = false;
+        }
+    }
+
+    void reset(){
+        if(upgraded){
+            std::vector<int> a = getAnimationIndices();
+            setAnimationIndices({a[0] +4 ,a[1] +4});
+            upgraded = false;
+        }
+    }
+
+    void upgrade(){
+        if(upgraded) return;
+        upgraded = true;
+        upgradeCountdpwn = 10;
+        std::vector<int> a = getAnimationIndices();
+        setAnimationIndices({a[0] -4 ,a[1] -4});
+        
     }
 
 private:
     float minHeight, maxHeight;
+    float upgradeCountdpwn = 0;
+    bool upgraded = false;
 };
 
 #endif
