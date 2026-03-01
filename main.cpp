@@ -54,7 +54,8 @@ void processInput();
 void update();
 void render();
 void shutdown();
-
+void newBall();
+void resetScores();
 
 void reset(){
     gLeftPaddle->setPosition({ 60, SCREEN_HEIGHT / 2 });
@@ -62,15 +63,16 @@ void reset(){
 
     gLeftPaddle->reset();
     gRightPaddle->reset();
-    gBalls[0]->reset(gSpeed);
-    for(size_t i = gBalls.size() -1; i >= 1; --i){
+    for(size_t i = gBalls.size(); i >= 1; --i){
         // printf("hi%i\n", i);
-        delete gBalls[i];
+        delete gBalls[i-1];
         gBalls.pop_back();
     }
+    newBall();
     gPowerUp->reset();
 }
 
+// new ball
 void newBall(){
     gBalls.push_back(new Ball(
             ORIGIN,// position
@@ -85,6 +87,7 @@ void newBall(){
         gBalls[gBalls.size() -1]->setColliderDimensions({30.0f,30.0f});
 }
 
+//reset scores
 void resetScores(){
     gLeftScore->reset();
     gRightScore->reset();
@@ -105,6 +108,7 @@ void initialise()
         {DIFFSELECT, {6,7}}
     };
 
+    // things
     gBg = new Background(
         ORIGIN,// position
        {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
@@ -424,6 +428,24 @@ void render()
 void shutdown() 
 { 
     CloseWindow();
+
+    reset();
+    delete gLeftPaddle;
+    delete gRightPaddle ;
+    delete gBalls[0];
+    delete gBg ;
+
+    delete gSinglePlayer ;
+    delete gMultiPlayer ;
+
+    delete gEasy ;
+    delete gMid ;
+    delete gHard ;
+
+    delete gLeftScore ;
+    delete gRightScore ;
+
+    delete gPowerUp ;
     
 }
 
