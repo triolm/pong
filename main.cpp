@@ -19,12 +19,16 @@ float gPreviousTicks = 0.0f;
 
 Paddle *gLeftPaddle = nullptr;
 Paddle *gRightPaddle = nullptr;
-Ball *gBall = nullptr;
+Ball *gBall[3];
 Background *gBg = nullptr;
 // Entity *gStartBg = nullptr;
 
 Button *gSinglePlayer = nullptr;
 Button *gMultiPlayer = nullptr;
+
+Button *gEasy = nullptr;
+Button *gMid = nullptr;
+Button *gHard = nullptr;
 
 Score *gLeftScore = nullptr;
 Score *gRightScore = nullptr;
@@ -32,6 +36,8 @@ Score *gRightScore = nullptr;
 // Entity *gWaitingBg = nullptr;
 // Entity *gP1bg = nullptr;
 // Entity *gP2bg = nullptr;
+
+float gSpeed = 500.0f;
 
 bool gAuto = false;
 
@@ -48,7 +54,12 @@ void shutdown();
 void reset(){
     gLeftPaddle->setPosition({ 60, SCREEN_HEIGHT / 2 });
     gRightPaddle->setPosition({ SCREEN_WIDTH-60, SCREEN_HEIGHT / 2 });
-    gBall->reset();
+    gBall[0]->reset(gSpeed);
+    gBall[1]->reset(gSpeed);
+    gBall[2]->reset(gSpeed);
+    gBall[0]->setDead(true);
+    gBall[1]->setDead(true);
+    gBall[2]->setDead(true);
 }
 
 void resetScores(){
@@ -62,46 +73,13 @@ void initialise()
 
     float sizeRatio  = 48.0f / 64.0f;
 
-
-    /*
-    By default, the colliders of our entity object will have the same
-    dimensions as the entity's scale.
-
-    Assets from @see https://sscary.itch.io/the-adventurer-female
-    */
-//    gWaitingBg = new Entity(
-//        ORIGIN,// position
-//        {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
-//        "./assets/waiting.png"    // texture file address
-//     );
-
-//    gGameBg = new Entity(
-//        ORIGIN,// position
-//        {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
-//        "./assets/bg.png"    // texture file address
-//     );
-    
-//    gP1bg = new Entity(
-//        ORIGIN,// position
-//        {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
-//        "./assets/player1.png",
-//         // ATLAS,                        // single image or atlas?
-//        { 2,1 },                     // atlas dimensions
-//        {0,1}                 // actual atlas
-//     );
-//    gP2bg = new Entity(
-//        ORIGIN,// position
-//        {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
-//        "./assets/player2.png",
-//        { 2,1 },                     // atlas dimensions
-//        {0,1}                // actual atlas
-//     );
     std::map<GameStatus, std::vector<int>> bgMap{
         {WAITING, {1}},
         {PLAYING, {0}},
         {PLAYER1, {2,3}},
         {PLAYER2, {4,5}},
-        {STARTMENU, {6,7}}
+        {STARTMENU, {6,7}},
+        {DIFFSELECT, {6,7}}
     };
 
     gBg = new Background(
@@ -113,31 +91,21 @@ void initialise()
     );
 
    gLeftScore = new Score(
-        {SCREEN_WIDTH/2- 30, 60},// position
+        {SCREEN_WIDTH/2- 40, 70},// position
         {13*4.5f, 24*4.5f}, // scale
         "./assets/gameplay.png",    // texture file address
-        // ATLAS,                        // single image or atlas?
         { 3,10 },                     // atlas dimensions
         { 20,21,22,23,24,25,26,27,28,29 }               // actual atlas
     );
    gRightScore = new Score(
-        {SCREEN_WIDTH/2+ 30, 60},// position
+        {SCREEN_WIDTH/2+ 40, 70},// position
         {13*4.5f, 24*4.5f}, // scale
         "./assets/gameplay.png",    // texture file address
-        // ATLAS,                        // single image or atlas?
         { 3,10 },                     // atlas dimensions
         { 10,11,12,13,14,15,16,17,18,19 }                // actual atlas
     );
-//    gStartBg = new Entity(
-//        ORIGIN,// position
-//        {SCREEN_WIDTH,SCREEN_HEIGHT}, // scale
-//        "./assets/startmenubg.png",    // texture file address
-//        { 2,1 },                     // atlas dimensions
-//        {0,1}                // actual atlas
-//     );
 
-
-   gBall = new Ball(
+   gBall[0] = new Ball(
        ORIGIN,// position
        {13*4.5f, 24*4.5f}, // scale
        "./assets/gameplay.png",    // texture file address
@@ -146,14 +114,34 @@ void initialise()
        { 3,10 },                     // atlas dimensions
        { 4,5 }                // actual atlas
     );
-    gBall->setColliderDimensions({30.0f,30.0f});
+    gBall[0]->setColliderDimensions({30.0f,30.0f});
+   gBall[1] = new Ball(
+       ORIGIN,// position
+       {13*4.5f, 24*4.5f}, // scale
+       "./assets/gameplay.png",    // texture file address
+        30.0f, SCREEN_HEIGHT - 30.0f,
+        40.0f, SCREEN_WIDTH - 40.0f,
+       { 3,10 },                     // atlas dimensions
+       { 4,5 }                // actual atlas
+    );
+    gBall[1]->setColliderDimensions({30.0f,30.0f});
+   gBall[2] = new Ball(
+       ORIGIN,// position
+       {13*4.5f, 24*4.5f}, // scale
+       "./assets/gameplay.png",    // texture file address
+        30.0f, SCREEN_HEIGHT - 30.0f,
+        40.0f, SCREEN_WIDTH - 40.0f,
+       { 3,10 },                     // atlas dimensions
+       { 4,5 }                // actual atlas
+    );
+    gBall[2]->setColliderDimensions({30.0f,30.0f});
 
 
    gSinglePlayer = new Button(
         {SCREEN_WIDTH/2 , SCREEN_HEIGHT/ 2 + 10},
        {80*4.5f, 22*4.5f}, // scale
        "./assets/ui.png",    // texture file address
-       { 3,2 },                     // atlas dimensions
+       { 5,2 },                     // atlas dimensions
        {0,1}                // actual atlas
     );
     gSinglePlayer->setColliderDimensions({150.0f,60.0f});
@@ -161,17 +149,47 @@ void initialise()
        {SCREEN_WIDTH/2 , SCREEN_HEIGHT/ 2 + 80},// position
        {80*4.5f, 22*4.5f}, // scale
        "./assets/ui.png",    // texture file address
-       { 3,2 },                     // atlas dimensions
+       { 5,2 },                     // atlas dimensions
        {2,3}                // actual atlas
     );
     gMultiPlayer->setColliderDimensions({150.0f,60.0f});
+
+
+    gEasy = new Button(
+       {SCREEN_WIDTH/2 , SCREEN_HEIGHT/ 2},// position
+       {80*4.5f, 22*4.5f}, // scale
+       "./assets/ui.png",    // texture file address
+       { 5,2 },                     // atlas dimensions
+       {4,5}                // actual atlas
+    );
+    gEasy->setColliderDimensions({150.0f,60.0f});
+    gMid = new Button(
+       {SCREEN_WIDTH/2 , SCREEN_HEIGHT/ 2 + 60},// position
+       {80*4.5f, 22*4.5f}, // scale
+       "./assets/ui.png",    // texture file address
+       { 5,2 },                     // atlas dimensions
+       {6,7}                // actual atlas
+    );
+    gMid->setColliderDimensions({150.0f,60.0f});
+
+    gHard = new Button(
+       {SCREEN_WIDTH/2 , SCREEN_HEIGHT/ 2 + 120},// position
+       {80*4.5f, 22*4.5f}, // scale
+       "./assets/ui.png",    // texture file address
+       { 5,2 },                     // atlas dimensions
+       {8,9}                // actual atlas
+    );
+    gHard->setColliderDimensions({150.0f,60.0f});
+
+
+
+
     
     gLeftPaddle = new Paddle(
         { 60, SCREEN_HEIGHT / 2 },// position
         {13*4.5f, 24*4.5f}, // scale
         "./assets/gameplay.png",      // texture file address
         40.0f, SCREEN_HEIGHT - 40.0f,
-        // ATLAS,                        // single image or atlas?
         { 3,10 },                     // atlas dimensions
         {0,1}                // actual atlas
     );
@@ -182,7 +200,6 @@ void initialise()
         {13*4.5f, 24*4.5f}, // scale
         "./assets/gameplay.png",       // texture file address
         40.0f, SCREEN_HEIGHT - 40.0f,
-        // ATLAS,                        // single image or atlas?
         { 3,10 },                     // atlas dimensions
         {2,3}                // actual atlas
     );
@@ -194,29 +211,60 @@ void initialise()
 
 void processInput() 
 {
+    gLeftPaddle->resetMovement();
+    gRightPaddle->resetMovement();
+
     if (IsKeyPressed(KEY_Q) || WindowShouldClose()) gAppStatus = TERMINATED;
+
+    if(gGameStatus == DIFFSELECT){
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && gEasy->CollidingWithPoint(GetMousePosition())){
+            gGameStatus = WAITING;
+            gSpeed = 400;
+        }
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && gMid->CollidingWithPoint(GetMousePosition())){
+            gGameStatus = WAITING;
+            gSpeed = 500;
+        }
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && gHard->CollidingWithPoint(GetMousePosition())){
+            gGameStatus = WAITING;
+            gSpeed = 600;
+        }
+    }
 
     if(gGameStatus == STARTMENU || gGameStatus == PLAYER1 || gGameStatus == PLAYER2){
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && gSinglePlayer->CollidingWithPoint(GetMousePosition())){
-            gGameStatus = WAITING;
+            gGameStatus = DIFFSELECT;
             gAuto = true;
         }
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && gMultiPlayer->CollidingWithPoint(GetMousePosition())){
-            gGameStatus = WAITING;
+            gGameStatus = DIFFSELECT;
             gAuto = false;
         }
     }
 
     if (gGameStatus == WAITING && IsKeyPressed(KEY_SPACE)){
         gGameStatus = PLAYING;
-        gBall->setDead(false);
+        gBall[0]->setDead(false);
+        // gBall[1]->setDead(false);
+        // gBall[2]->setDead(false);
+
+        gBall[0]->reset(gSpeed);
+        gBall[1]->reset(gSpeed);
+        gBall[2]->reset(gSpeed);
+    }
+
+    if (gGameStatus == PLAYING && IsKeyPressed(KEY_TWO)){
+        gBall[1]->setDead(false);
+    }
+
+    if (gGameStatus == PLAYING && IsKeyPressed(KEY_THREE)){
+        gBall[1]->setDead(false);
+        gBall[2]->setDead(false);
     }
 
     if(IsKeyPressed(KEY_T)) gAuto = !gAuto;
     
     if(gGameStatus == PLAYING){
-        gLeftPaddle->resetMovement();
-        gRightPaddle->resetMovement();
 
         if      (IsKeyDown(KEY_W)) gLeftPaddle->moveUp();
         else if (IsKeyDown(KEY_S)) gLeftPaddle->moveDown();
@@ -225,8 +273,12 @@ void processInput()
             if      (IsKeyDown(KEY_UP)) gRightPaddle->moveUp();
             else if (IsKeyDown(KEY_DOWN)) gRightPaddle->moveDown();
         } else {
-            if(gBall->getPosition().y - gRightPaddle->getPosition().y > 5) gRightPaddle->moveDown();
-            else if(gRightPaddle->getPosition().y - gBall->getPosition().y > 5) gRightPaddle->moveUp();
+            Ball* b = gBall[0];
+            if(b->getDead() || (!gBall[1]->getDead() && gBall[1]->getPosition().x > b->getPosition().x)) b = gBall[1];
+            if(b->getDead() || (!gBall[2]->getDead() && gBall[2]->getPosition().x > b->getPosition().x)) b = gBall[2];
+
+            if(b->getPosition().y - gRightPaddle->getPosition().y > 5) gRightPaddle->moveDown();
+            else if(gRightPaddle->getPosition().y - b->getPosition().y > 5) gRightPaddle->moveUp();
         }
     }
 
@@ -241,51 +293,60 @@ void update()
 
     gBg->update(deltaTime);
 
-    if(gGameStatus == STARTMENU){
+    if(gGameStatus == DIFFSELECT){
+        gEasy->update(deltaTime);
+        gMid->update(deltaTime);
+        gHard->update(deltaTime);
+    }
+
+    if(gGameStatus == STARTMENU || gGameStatus == PLAYER1 || gGameStatus == PLAYER2){
         // gStartBg->update(deltaTime);
         gSinglePlayer->update(deltaTime);
         gMultiPlayer->update(deltaTime);
     }
 
-    if(gGameStatus == PLAYER1){
-        // gP1bg->update(deltaTime);
-        gSinglePlayer->update(deltaTime);
-        gMultiPlayer->update(deltaTime);
-    }
-
-    if(gGameStatus == PLAYER2){
-        // gP2bg->update(deltaTime);
-        gSinglePlayer->update(deltaTime);
-        gMultiPlayer->update(deltaTime);
+    if(gGameStatus == WAITING){
+        gLeftPaddle->update(deltaTime);
+        gRightPaddle->update(deltaTime);
     }
 
     if(gGameStatus == PLAYING){
         // we're not checking collisions—for now
         gLeftPaddle->update(deltaTime);
         gRightPaddle->update(deltaTime);
-        gBall->update(deltaTime);
-        
-        gBall->paddleInteraction(gLeftPaddle);
-        gBall->paddleInteraction(gRightPaddle);
-        // if(gBall->isColliding(gLeftPaddle)) printf("AAA\n");
 
-        if(gBall->getDead()){
-            gGameStatus = WAITING;
-            if(gBall->getPosition().x > SCREEN_WIDTH /2.0f) gLeftScore->increaseScore();
-            else gRightScore->increaseScore();
-            
+        if(gBall[0]->getDead() && gBall[1]->getDead() && gBall[2]->getDead()){
             reset();
-
-            if(gLeftScore->getWon()) {
-                gGameStatus = PLAYER1;
-                resetScores();
-            }
-            if(gRightScore->getWon()) {
-                gGameStatus = PLAYER2;
-                resetScores();
-            }
+            gGameStatus = WAITING;
             
         }
+
+        for ( size_t i = 0; i < 3; ++i){
+            if(!gBall[i]->getDead()) {
+                gBall[i]->update(deltaTime);
+                gBall[i]->paddleInteraction(gLeftPaddle);
+                gBall[i]->paddleInteraction(gRightPaddle);
+                
+                if(!gBall[i]->getBeenScored()){
+                    if(gBall[i]->getPosition().x > SCREEN_WIDTH /2.0f) gLeftScore->increaseScore();
+                    else gRightScore->increaseScore();
+                    gBall[i]->setBeenScored(true);
+                }
+
+                if(gLeftScore->getWon()) {
+                    gGameStatus = PLAYER1;
+                    resetScores();
+                    reset();
+                }
+                if(gRightScore->getWon()) {
+                    gGameStatus = PLAYER2;
+                    resetScores();
+                    reset();
+                }
+            }
+        }
+
+        
     }
 }
 
@@ -295,6 +356,12 @@ void render()
     ClearBackground(ColorFromHex(BG_COLOUR));
 
     gBg->render();
+
+    if(gGameStatus == DIFFSELECT){
+        gEasy->render();
+        gMid->render();
+        gHard->render();
+    }
     
     if(gGameStatus == STARTMENU){
         // gStartBg->render();
@@ -320,7 +387,10 @@ void render()
         // }
         gLeftPaddle->render();
         gRightPaddle->render();
-        gBall->render();
+
+        if(!gBall[0]->getDead()) gBall[0]->render();
+        if(!gBall[1]->getDead()) gBall[1]->render();
+        if(!gBall[2]->getDead()) gBall[2]->render();
 
         gLeftScore->render();
         gRightScore->render();

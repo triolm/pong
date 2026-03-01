@@ -2,7 +2,7 @@
 #define BACKGROUND_H
 #include "Entity.h"
 
-enum GameStatus {PLAYING, WAITING, STARTMENU, PLAYER1, PLAYER2};
+enum GameStatus {PLAYING, DIFFSELECT, WAITING, STARTMENU, PLAYER1, PLAYER2};
 
 
 class Background: public Entity
@@ -19,7 +19,7 @@ public:
 
             
     virtual const std::vector<int> getAnimationIndices() const { 
-        printf("hi\n");
+        // printf("hi\n");
         return  atlas.at(*gGameStatus);
     }
 

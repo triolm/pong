@@ -18,9 +18,9 @@ public:
         Entity(position, scale, textureFilepath, 
         spriteSheetDimensions, animationIndices){
 
-        setSpeed(650);
+        // setSpeed(500);
         moveLeft();
-        reset();
+        reset(500);
     }
 
     void update(float deltaTime){
@@ -42,18 +42,28 @@ public:
            getPosition().x - getColliderDimensions().x < minWidth) {
             // reset();
             dead = true;
+            beenScored = false;
         }
 
     }
 
-    bool getDead(){
+    bool getDead() const {
         return dead;
     }
     void setDead(bool dead){
         this->dead = dead;
     }
 
-    void reset(){
+    bool getBeenScored() const{
+        return beenScored;
+    }
+
+    void setBeenScored(bool s){
+        beenScored = s;
+    }
+
+    void reset(float speed){
+        setSpeed(speed);
         setPosition({(minWidth + maxWidth)/2.0f,(minHeight+maxHeight)/2.0f});
             setMovementY(0);
             normaliseMovement();
@@ -71,11 +81,20 @@ public:
             setMovementY((getPosition().y-paddleY)/paddleHeight);
             normaliseMovement();
 
+            setSpeed(getSpeed() * 1.025f);
+
             setAngle(GetRandomValue(0,365));
-            if(getMovement().x > 0)
-                setPositionX(p->getPosition().x + p->getColliderDimensions().x/2.0f + getColliderDimensions().x/2.0f);
-                else
-                setPositionX(p->getPosition().x - p->getColliderDimensions().x/2.0f - getColliderDimensions().x/2.0f);
+
+            float posDiff = p->getPosition().x - getPosition().x;
+            
+            if(posDiff > 0) posDiff -= p->getColliderDimensions().x/2.0f + getColliderDimensions().x/2.0f;
+            else posDiff += p->getColliderDimensions().x/2.0f + getColliderDimensions().x/2.0f;
+
+            // if(posDiff.y > 0) posDiff.y -= p->getColliderDimensions().y + getColliderDimensions().y;
+            // else posDiff.y += p->getColliderDimensions().y + getColliderDimensions().y;
+            setPositionX(getPosition().x + posDiff);
+
+            
         }
     }
 
@@ -83,6 +102,7 @@ private:
     float minHeight, maxHeight;
     float minWidth, maxWidth;
     bool dead = true;
+    bool beenScored = true;
 };
 
 #endif
