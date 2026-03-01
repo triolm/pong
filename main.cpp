@@ -19,7 +19,7 @@ float gPreviousTicks = 0.0f;
 
 Paddle *gLeftPaddle = nullptr;
 Paddle *gRightPaddle = nullptr;
-Ball *gBall[3];
+// Ball *gBall[3];
 Background *gBg = nullptr;
 // Entity *gStartBg = nullptr;
 
@@ -32,6 +32,8 @@ Button *gHard = nullptr;
 
 Score *gLeftScore = nullptr;
 Score *gRightScore = nullptr;
+
+std::vector<Ball*> gBalls;
 
 // Entity *gWaitingBg = nullptr;
 // Entity *gP1bg = nullptr;
@@ -54,12 +56,26 @@ void shutdown();
 void reset(){
     gLeftPaddle->setPosition({ 60, SCREEN_HEIGHT / 2 });
     gRightPaddle->setPosition({ SCREEN_WIDTH-60, SCREEN_HEIGHT / 2 });
-    gBall[0]->reset(gSpeed);
-    gBall[1]->reset(gSpeed);
-    gBall[2]->reset(gSpeed);
-    gBall[0]->setDead(true);
-    gBall[1]->setDead(true);
-    gBall[2]->setDead(true);
+    gBalls[0]->reset(gSpeed);
+    for(size_t i = gBalls.size() -1; i >= 1; --i){
+        // printf("hi%i\n", i);
+        delete gBalls[i];
+        gBalls.pop_back();
+    }
+}
+
+void newBall(){
+    gBalls.push_back(new Ball(
+            ORIGIN,// position
+            {13*4.5f, 24*4.5f}, // scale
+            "./assets/gameplay.png",    // texture file address
+            30.0f, SCREEN_HEIGHT - 30.0f,
+            40.0f, SCREEN_WIDTH - 40.0f,
+            { 3,10 },                     // atlas dimensions
+            { 4,5 },
+            gSpeed              // actual atlas
+        ));
+        gBalls[gBalls.size() -1]->setColliderDimensions({30.0f,30.0f});
 }
 
 void resetScores(){
@@ -104,37 +120,6 @@ void initialise()
         { 3,10 },                     // atlas dimensions
         { 10,11,12,13,14,15,16,17,18,19 }                // actual atlas
     );
-
-   gBall[0] = new Ball(
-       ORIGIN,// position
-       {13*4.5f, 24*4.5f}, // scale
-       "./assets/gameplay.png",    // texture file address
-        30.0f, SCREEN_HEIGHT - 30.0f,
-        40.0f, SCREEN_WIDTH - 40.0f,
-       { 3,10 },                     // atlas dimensions
-       { 4,5 }                // actual atlas
-    );
-    gBall[0]->setColliderDimensions({30.0f,30.0f});
-   gBall[1] = new Ball(
-       ORIGIN,// position
-       {13*4.5f, 24*4.5f}, // scale
-       "./assets/gameplay.png",    // texture file address
-        30.0f, SCREEN_HEIGHT - 30.0f,
-        40.0f, SCREEN_WIDTH - 40.0f,
-       { 3,10 },                     // atlas dimensions
-       { 4,5 }                // actual atlas
-    );
-    gBall[1]->setColliderDimensions({30.0f,30.0f});
-   gBall[2] = new Ball(
-       ORIGIN,// position
-       {13*4.5f, 24*4.5f}, // scale
-       "./assets/gameplay.png",    // texture file address
-        30.0f, SCREEN_HEIGHT - 30.0f,
-        40.0f, SCREEN_WIDTH - 40.0f,
-       { 3,10 },                     // atlas dimensions
-       { 4,5 }                // actual atlas
-    );
-    gBall[2]->setColliderDimensions({30.0f,30.0f});
 
 
    gSinglePlayer = new Button(
@@ -205,6 +190,7 @@ void initialise()
     );
     gRightPaddle->setColliderDimensions({30,90});
 
+    newBall();
 
     SetTargetFPS(FPS);
 }
@@ -244,23 +230,24 @@ void processInput()
 
     if (gGameStatus == WAITING && IsKeyPressed(KEY_SPACE)){
         gGameStatus = PLAYING;
-        gBall[0]->setDead(false);
-        // gBall[1]->setDead(false);
-        // gBall[2]->setDead(false);
-
-        gBall[0]->reset(gSpeed);
-        gBall[1]->reset(gSpeed);
-        gBall[2]->reset(gSpeed);
+        gBalls[0]->setDead(false);
+        gBalls[0]->reset(gSpeed);
     }
 
+    if (gGameStatus == PLAYING && IsKeyPressed(KEY_ONE)){
+        newBall();
+    }
     if (gGameStatus == PLAYING && IsKeyPressed(KEY_TWO)){
-        gBall[1]->setDead(false);
+        newBall();
+        newBall();
+    }
+    if (gGameStatus == PLAYING && IsKeyPressed(KEY_THREE)){
+        newBall();
+        newBall();
+        newBall();
     }
 
-    if (gGameStatus == PLAYING && IsKeyPressed(KEY_THREE)){
-        gBall[1]->setDead(false);
-        gBall[2]->setDead(false);
-    }
+  
 
     if(IsKeyPressed(KEY_T)) gAuto = !gAuto;
     
@@ -273,9 +260,10 @@ void processInput()
             if      (IsKeyDown(KEY_UP)) gRightPaddle->moveUp();
             else if (IsKeyDown(KEY_DOWN)) gRightPaddle->moveDown();
         } else {
-            Ball* b = gBall[0];
-            if(b->getDead() || (!gBall[1]->getDead() && gBall[1]->getPosition().x > b->getPosition().x)) b = gBall[1];
-            if(b->getDead() || (!gBall[2]->getDead() && gBall[2]->getPosition().x > b->getPosition().x)) b = gBall[2];
+            Ball* b = gBalls[0];
+            for(Ball* ball : gBalls){
+                if(b->getDead() || (!ball->getDead() && ball->getPosition().x > b->getPosition().x)) b = ball;
+            }
 
             if(b->getPosition().y - gRightPaddle->getPosition().y > 5) gRightPaddle->moveDown();
             else if(gRightPaddle->getPosition().y - b->getPosition().y > 5) gRightPaddle->moveUp();
@@ -315,22 +303,34 @@ void update()
         gLeftPaddle->update(deltaTime);
         gRightPaddle->update(deltaTime);
 
-        if(gBall[0]->getDead() && gBall[1]->getDead() && gBall[2]->getDead()){
+        bool allDead = true;
+        for(const Ball* b: gBalls){
+            // printf("%i\n", b->getDead());
+            if(!b->getDead()){
+                allDead = false;
+                break;
+            }
+        }
+
+        if(allDead){
             reset();
             gGameStatus = WAITING;
             
         }
 
-        for ( size_t i = 0; i < 3; ++i){
-            if(!gBall[i]->getDead()) {
-                gBall[i]->update(deltaTime);
-                gBall[i]->paddleInteraction(gLeftPaddle);
-                gBall[i]->paddleInteraction(gRightPaddle);
+        // printf("balls\n");
+
+        for (Ball* b : gBalls){
+            // printf("%i\n", b->getDead());
+            if(!b->getDead()) {
+                b->update(deltaTime);
+                b->paddleInteraction(gLeftPaddle);
+                b->paddleInteraction(gRightPaddle);
                 
-                if(!gBall[i]->getBeenScored()){
-                    if(gBall[i]->getPosition().x > SCREEN_WIDTH /2.0f) gLeftScore->increaseScore();
+                if(!b->getBeenScored()){
+                    if(b->getPosition().x > SCREEN_WIDTH /2.0f) gLeftScore->increaseScore();
                     else gRightScore->increaseScore();
-                    gBall[i]->setBeenScored(true);
+                    b->setBeenScored(true);
                 }
 
                 if(gLeftScore->getWon()) {
@@ -388,9 +388,9 @@ void render()
         gLeftPaddle->render();
         gRightPaddle->render();
 
-        if(!gBall[0]->getDead()) gBall[0]->render();
-        if(!gBall[1]->getDead()) gBall[1]->render();
-        if(!gBall[2]->getDead()) gBall[2]->render();
+        for(Ball* b: gBalls){
+            if(!b->getDead()) b->render();
+        }
 
         gLeftScore->render();
         gRightScore->render();

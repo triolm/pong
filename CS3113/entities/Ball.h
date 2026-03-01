@@ -11,16 +11,16 @@ class Ball: public Entity
 public:
     Ball(Vector2 position, Vector2 scale, const char *textureFilepath,
         float minHeight, float maxHeight,float minWidth, float maxWidth,
-        Vector2 spriteSheetDimensions, std::vector<int> animationIndices) : 
+        Vector2 spriteSheetDimensions, std::vector<int> animationIndices, float speed = 500) : 
 
         minHeight(minHeight), maxHeight(maxHeight), 
-        minWidth(minWidth), maxWidth(maxWidth), 
+        minWidth(minWidth), maxWidth(maxWidth),
         Entity(position, scale, textureFilepath, 
         spriteSheetDimensions, animationIndices){
 
         // setSpeed(500);
         moveLeft();
-        reset(500);
+        reset(speed);
     }
 
     void update(float deltaTime){
@@ -101,7 +101,7 @@ public:
 private:
     float minHeight, maxHeight;
     float minWidth, maxWidth;
-    bool dead = true;
+    bool dead = false;
     bool beenScored = true;
 };
 
